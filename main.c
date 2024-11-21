@@ -42,6 +42,7 @@ int countEdges(int matrix[MAX][MAX], int n) {
 
 void findVertexTypes(int matrix[MAX][MAX], int n) {
     int isolatedCount = 0, endCount = 0, dominantCount = 0;
+    int isolatedPrinted = 0, endPrinted = 0, dominantPrinted = 0;
 
     printf("Isolated vertices: ");
     for (int i = 0; i < n; i++) {
@@ -49,40 +50,38 @@ void findVertexTypes(int matrix[MAX][MAX], int n) {
         for (int j = 0; j < n; j++) {
             degree += matrix[i][j];
         }
+
+        // Проверка на изолированную вершину
         if (degree == 0) {
             printf("%d ", i);
             isolatedCount++;
+            isolatedPrinted = 1;
         }
-    }
-    if (isolatedCount == 0) printf("None");
-    printf("\n");
 
-    printf("End vertices: ");
-    for (int i = 0; i < n; i++) {
-        int degree = 0;
-        for (int j = 0; j < n; j++) {
-            degree += matrix[i][j];
-        }
+        // Проверка на конечную вершину
         if (degree == 1) {
+            if (!endPrinted) {
+                printf("\nEnd vertices: ");
+                endPrinted = 1;
+            }
             printf("%d ", i);
             endCount++;
         }
-    }
-    if (endCount == 0) printf("None");
-    printf("\n");
 
-    printf("Dominant vertices: ");
-    for (int i = 0; i < n; i++) {
-        int degree = 0;
-        for (int j = 0; j < n; j++) {
-            degree += matrix[i][j];
-        }
+        // Проверка на доминирующую вершину
         if (degree == n - 1) {
+            if (!dominantPrinted) {
+                printf("\nDominant vertices: ");
+                dominantPrinted = 1;
+            }
             printf("%d ", i);
             dominantCount++;
         }
     }
-    if (dominantCount == 0) printf("None");
+
+    if (!isolatedPrinted) printf("None");
+    if (!endPrinted) printf("\nEnd vertices: None");
+    if (!dominantPrinted) printf("\nDominant vertices: None");
     printf("\n");
 }
 
@@ -117,7 +116,7 @@ int countEdgesFromIncidenceMatrix(int incidenceMatrix[MAX][MAX], int n, int edge
                 countOnes++;
             }
         }
-        if (countOnes == 2) { // Если инцидентность 2 вершин, то это ребро
+        if (countOnes == 2) {
             edges++;
         }
     }
