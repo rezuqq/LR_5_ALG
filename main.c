@@ -4,9 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX 100
-
-void generate_matrix(int matrix[MAX][MAX], int n) {
+void generate_matrix(int** matrix, int n) {
     for (int i = 0; i < n; i++) {
         for (int j = i; j < n; j++) {
             if (i == j) {
@@ -19,7 +17,7 @@ void generate_matrix(int matrix[MAX][MAX], int n) {
     }
 }
 
-void printMatrix(int matrix[MAX][MAX], int n) {
+void printMatrix(int** matrix, int n) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             printf("%d ", matrix[i][j]);
@@ -28,7 +26,7 @@ void printMatrix(int matrix[MAX][MAX], int n) {
     }
 }
 
-int countEdges(int matrix[MAX][MAX], int n) {
+int countEdges(int** matrix, int n) {
     int edges = 0;
     for (int i = 0; i < n; i++) {
         for (int j = i + 1; j < n; j++) {
@@ -40,25 +38,25 @@ int countEdges(int matrix[MAX][MAX], int n) {
     return edges;
 }
 
-void findVertexTypes(int matrix[MAX][MAX], int n) {
+void findMatrixType(int** matrix, int n, int size) {
     int isolatedCount = 0, endCount = 0, dominantCount = 0;
     int isolatedPrinted = 0, endPrinted = 0, dominantPrinted = 0;
-
-    printf("Isolated vertices: ");
     for (int i = 0; i < n; i++) {
         int degree = 0;
-        for (int j = 0; j < n; j++) {
+
+        for (int j = 0; j < size; j++) {
             degree += matrix[i][j];
         }
 
-        // Проверка на изолированную вершину
         if (degree == 0) {
+            if (!isolatedPrinted) {
+                printf("\nIsolated vertices: ");
+                isolatedPrinted = 1;
+            }
             printf("%d ", i);
             isolatedCount++;
-            isolatedPrinted = 1;
         }
 
-        // Проверка на конечную вершину
         if (degree == 1) {
             if (!endPrinted) {
                 printf("\nEnd vertices: ");
@@ -68,8 +66,7 @@ void findVertexTypes(int matrix[MAX][MAX], int n) {
             endCount++;
         }
 
-        // Проверка на доминирующую вершину
-        if (degree == n - 1) {
+        if (degree == size - 1) {
             if (!dominantPrinted) {
                 printf("\nDominant vertices: ");
                 dominantPrinted = 1;
@@ -79,13 +76,27 @@ void findVertexTypes(int matrix[MAX][MAX], int n) {
         }
     }
 
-    if (!isolatedPrinted) printf("None");
-    if (!endPrinted) printf("\nEnd vertices: None");
-    if (!dominantPrinted) printf("\nDominant vertices: None");
+    if (isolatedPrinted == 0) printf("\nIsolated vertices: None");
+    if (endPrinted == 0) printf("\nEnd vertices: None");
+    if (dominantPrinted == 0) printf("\nDominant vertices: None");
     printf("\n");
 }
 
-void generate_incidence_matrix(int matrix[MAX][MAX], int n, int edgeCount, int incidenceMatrix[MAX][MAX]) {
+void findVertexTypes(int **matrix, int n, int edgeCount) {
+
+    printf("");
+    if (n == edgeCount) {
+        findMatrixType(matrix, n, n);
+    }
+    else
+    {
+        findMatrixType(matrix, n, edgeCount);
+    }
+
+    printf("\n");
+}
+
+void generate_incidence_matrix(int** matrix, int n, int edgeCount, int** incidenceMatrix) {
     int edgeIndex = 0;
 
     for (int i = 0; i < n; i++) {
@@ -107,7 +118,7 @@ void generate_incidence_matrix(int matrix[MAX][MAX], int n, int edgeCount, int i
     }
 }
 
-int countEdgesFromIncidenceMatrix(int incidenceMatrix[MAX][MAX], int n, int edgeCount) {
+int countEdgesFromIncidenceMatrix(int** incidenceMatrix, int n, int edgeCount) {
     int edges = 0;
     for (int j = 0; j < edgeCount; j++) {
         int countOnes = 0;
@@ -127,15 +138,18 @@ int main() {
     int n;
     srand(time(NULL));
 
-    int adjacencyMatrix[MAX][MAX];
-    int incidenceMatrix[MAX][MAX] = { 0 };
-
-    printf("Input count of vertices (no more than %d): ", MAX);
+    printf("Input count of vertices: ");
     scanf("%d", &n);
 
-    if (n > MAX || n <= 0) {
+    if (n <= 0) {
         printf("Invalid count of vertices.\n");
         return 1;
+    }
+
+    // Динамическое выделение памяти для матрицы смежности
+    int** adjacencyMatrix = (int**)malloc(n * sizeof(int*));
+    for (int i = 0; i < n; i++) {
+        adjacencyMatrix[i] = (int*)malloc(n * sizeof(int));
     }
 
     generate_matrix(adjacencyMatrix, n);
@@ -145,15 +159,26 @@ int main() {
 
     int edgeCount = countEdges(adjacencyMatrix, n);
     printf("Size of the graph (number of edges): %d\n", edgeCount);
-
-    findVertexTypes(adjacencyMatrix, n);
+    findVertexTypes(adjacencyMatrix, n, edgeCount);
+    // Динамическое выделение памяти для матрицы инцидентности
+    int** incidenceMatrix = (int**)malloc(n * sizeof(int*));
+    for (int i = 0; i < n; i++) {
+        incidenceMatrix[i] = (int*)calloc(edgeCount, sizeof(int)); // Инициализация нулями
+    }
 
     generate_incidence_matrix(adjacencyMatrix, n, edgeCount, incidenceMatrix);
 
     int calculatedEdgeCount = countEdgesFromIncidenceMatrix(incidenceMatrix, n, edgeCount);
     printf("Calculated size of the graph (number of edges from incidence matrix): %d\n", calculatedEdgeCount);
+    findVertexTypes(incidenceMatrix, n, edgeCount);
 
-    findVertexTypes(incidenceMatrix, n);
+    // Освобождение памяти
+    for (int i = 0; i < n; i++) {
+        free(adjacencyMatrix[i]);
+        free(incidenceMatrix[i]);
+    }
+    free(adjacencyMatrix);
+    free(incidenceMatrix);
 
     return 0;
 }
